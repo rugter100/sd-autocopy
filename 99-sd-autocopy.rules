@@ -1,0 +1,2 @@
+SUBSYSTEM=="block", ACTION=="add", ENV{DEVTYPE}=="partition", ENV{ID_PART_ENTRY_NUMBER}=="1", RUN="/usr/local/bin/sd-autocopy"
+#SUBSYSTEM=="block", ACTION=="add", ENV{DEVTYPE}=="disk", ENV{ID_DRIVE_FLASH_SD}=="1", RUN="/usr/local/bin/sd-autocopy"

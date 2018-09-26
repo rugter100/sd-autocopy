@@ -3,6 +3,7 @@
 # sd-autocopy - Copies/Moves images automatically from inserted media
 #
 # Copyright (c) 2011 Lars Michelsen <lm@larsmichelsen.com>
+# Copyright (c) 2018 Christian Strassburg <c.strassburg@gmx.de>
 #
 # License:
 #
@@ -23,11 +24,12 @@
 # for not blocking udev during copying.
 {
 
-USER=lm
-TARGET=/home/$USER/Pictures/Photos
-HANDLED_SERIALS="0x000006d4"
+USER=chr
+#TARGET=/home/$USER/Pictures/Photos
+TARGET=/storage/bilder
+HANDLED_SERIALS="0x01964ab3"
 MOUNT=/mnt/sd-autocopy
-FILE_MATCH=".*\.(jpg|cr2)$"
+FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
 TRANSFER=mv
 
 # END OF CONFIGURATION ########################################################
@@ -39,14 +41,16 @@ TRANSFER=mv
 
 # Catch unset but needed vars - terminate script
 if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
+    beep -f100 -l 300 -D 30; beep -l300 -f50 -D30; beep -f100 -l300 -D 30; beep -f50 -D30 -l300
     exit 1
 fi
 
 if ! echo "$HANDLED_SERIALS" | grep $ID_SERIAL >/dev/null 2>&1; then
     logger -t sd-autocopy "Got unhandled serial, skipping (Serial: $ID_SERIAL)"
+    beep -f100 -l 300 -D 30; beep -l300 -f50 -D30; beep -f100 -l300 -D 30; beep -f50 -D30 -l300
     exit 1
 fi
-
+beep -f440  -l444 
 logger -t sd-autocopy "Got handled serial ($ID_SERIAL), moving images..."
 
 if [ ! -d "$MOUNT" ]; then
@@ -55,7 +59,7 @@ fi
 
 mount $DEVNAME "$MOUNT"
 
-LINES=$(find "$MOUNT" -regextype posix-egrep -iregex "$FILE_MATCH" -printf "%TY-%Tm-%Td_%p\n")
+LINES=$(find "$MOUNT" -regextype posix-egrep -iregex "$FILE_MATCH" -printf "%TY.%Tm.%Td_%p\n")
 DATES=$(echo "$LINES" | cut -d_ -f1 | uniq)
 
 # First create the directories when missing
@@ -83,6 +87,29 @@ for DATE in $DATES; do
 done
 
 logger -t sd-autocopy "Finished job. Moved $NUM images."
+beep -f659  -l460 \
+-n -f784  -l340 \
+-n -f659  -l230 \
+-n -f659  -l110 \
+-n -f880  -l23  \
+-n -f659  -l230 \
+-n -f587  -l230 \
+-n -f659  -l460 \
+-n -f988  -l340 \
+-n -f659  -l230 \
+-n -f659  -l110 \
+-n -f1047 -l230 \
+-n -f988  -l230 \
+-n -f784  -l230 \
+-n -f659  -l230 \
+-n -f988  -l230 \
+-n -f1318 -l230 \
+-n -f659  -l110 \
+-n -f587  -l230 \
+-n -f587  -l110 \
+-n -f494  -l230 \
+-n -f740  -l230 \
+-n -f659  -l460
 
 } &
 exit 0
