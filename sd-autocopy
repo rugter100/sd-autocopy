@@ -20,6 +20,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+# For testing, change it to: [ 1 == 1 ]
+if [ 1 == 2 ]; then
+   echo ======================== >> /tmp/test
+   env >> /tmp/test
+   exit 0
+fi
+
+
 # Put this in curly braces and detach the whole block to background
 # for not blocking udev during copying.
 {
@@ -27,7 +35,7 @@
 USER=chr
 #TARGET=/home/$USER/Pictures/Photos
 TARGET=/storage/bilder
-HANDLED_SERIALS="0x01964ab3"
+HANDLED_SERIALS="Mass_Storage_Device_121F20110712-0:0"
 MOUNT=/mnt/sd-autocopy
 FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
 TRANSFER=mv
@@ -41,13 +49,13 @@ TRANSFER=mv
 
 # Catch unset but needed vars - terminate script
 if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
-    beep -f100 -l 300 -D 30; beep -l300 -f50 -D30; beep -f100 -l300 -D 30; beep -f50 -D30 -l300
+    beep -f100 -l 300 -D 30 -n -l300 -f50 -D30 -n -f100 -l300 -D 30 -n -f50 -D30 -l300
     exit 1
 fi
 
 if ! echo "$HANDLED_SERIALS" | grep $ID_SERIAL >/dev/null 2>&1; then
     logger -t sd-autocopy "Got unhandled serial, skipping (Serial: $ID_SERIAL)"
-    beep -f100 -l 300 -D 30; beep -l300 -f50 -D30; beep -f100 -l300 -D 30; beep -f50 -D30 -l300
+    beep -f100 -l 300 -D 30 -n -l300 -f50 -D30 -n -f100 -l300 -D 30 -n -f50 -D30 -l300
     exit 1
 fi
 beep -f440  -l444 
@@ -86,7 +94,13 @@ for DATE in $DATES; do
     chown -R $USER.$USER "$TARGET/$DATE"
 done
 
+# delete all empty directories on SD card
+find "$MOUNT" -type d -empty -delete
+
 logger -t sd-autocopy "Finished job. Moved $NUM images."
+
+
+# play finish melody ;-)
 beep -f659  -l460 \
 -n -f784  -l340 \
 -n -f659  -l230 \
