@@ -21,109 +21,70 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 # For testing, change it to: [ 1 == 1 ]
-if [ 1 == 2 ]; then
+if [ 0 == 1 ]; then
    echo ======================== >> /tmp/test
    env >> /tmp/test
    exit 0
 fi
 
-
 # Put this in curly braces and detach the whole block to background
 # for not blocking udev during copying.
 {
+    USER=andrew
+    TARGET=/home/$USER/Desktop/PhotoTest
+    MOUNT=/mnt/sd-autocopy
+    FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
+    # TRANSFER="rsync -avh --progress"
+    TRANSFER="rsync -avh --progress --remove-source-files"
 
-USER=chr
-#TARGET=/home/$USER/Pictures/Photos
-TARGET=/storage/bilder
-HANDLED_SERIALS="Mass_Storage_Device_121F20110712-0:0"
-MOUNT=/mnt/sd-autocopy
-FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
-TRANSFER=mv
+    # Catch unset but needed vars - terminate script
+    if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
+        exit 1
+    fi
 
-# END OF CONFIGURATION ########################################################
+    #if ! echo "$HANDLED_SERIALS" | grep $ID_SERIAL >/dev/null 2>&1; then
+    #    logger -t sd-autocopy "Got unhandled serial, skipping (Serial: $ID_SERIAL)"
+    #    exit 1
+    #fi
 
-# DEBUG:
-# To enable debugging without udev events uncomment the lines below
-#ID_SERIAL=0x000006d4
-#DEVNAME=/dev/mmcblk0p1
+    logger -t sd-autocopy "Got handled serial ($ID_SERIAL), moving images..."
 
-# Catch unset but needed vars - terminate script
-if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
-    beep -f100 -l 300 -D 30 -n -l300 -f50 -D30 -n -f100 -l300 -D 30 -n -f50 -D30 -l300
-    exit 1
-fi
+    if [ ! -d "$MOUNT" ]; then
+        mkdir -p "$MOUNT"
+    fi
 
-if ! echo "$HANDLED_SERIALS" | grep $ID_SERIAL >/dev/null 2>&1; then
-    logger -t sd-autocopy "Got unhandled serial, skipping (Serial: $ID_SERIAL)"
-    beep -f100 -l 300 -D 30 -n -l300 -f50 -D30 -n -f100 -l300 -D 30 -n -f50 -D30 -l300
-    exit 1
-fi
-beep -f440  -l444 
-logger -t sd-autocopy "Got handled serial ($ID_SERIAL), moving images..."
+    mount $DEVNAME "$MOUNT"
 
-if [ ! -d "$MOUNT" ]; then
-    mkdir -p "$MOUNT"
-fi
+    LINES=$(find "$MOUNT" -regextype posix-egrep -iregex "$FILE_MATCH" -printf "%TY.%Tm.%Td_%p\n")
+    DATES=$(echo "$LINES" | cut -d_ -f1 | uniq)
 
-mount $DEVNAME "$MOUNT"
+    # First create the directories when missing
+    for DATE in $DATES; do
+        echo $DATE
+        mkdir -p "$TARGET/$DATE"
+    done
 
-LINES=$(find "$MOUNT" -regextype posix-egrep -iregex "$FILE_MATCH" -printf "%TY.%Tm.%Td_%p\n")
-DATES=$(echo "$LINES" | cut -d_ -f1 | uniq)
+    # Move the images
+    NUM=0
+    for LINE in $LINES; do
+        DATE=${LINE%%_*}
+        FILE=${LINE#*_}
+        logger -t sd-autocopy "Moving $FILE to $TARGET/$DATE"
+        "$TRANFER" "$FILE" "$TARGET/$DATE"
+        NUM=$(($NUM+1))
+    done
 
-# First create the directories when missing
-for DATE in $DATES; do
-    echo $DATE
-    mkdir -p "$TARGET/$DATE"
-done
+    umount $DEVNAME
 
-# Move the images
-NUM=0
-for LINE in $LINES; do
-    DATE=${LINE%%_*}
-    FILE=${LINE#*_}
-    logger -t sd-autocopy "Moving $FILE to $TARGET/$DATE"
-    $TRANSFER "$FILE" "$TARGET/$DATE"
-    NUM=$(($NUM+1))
-done
+    # Fix the permissions for all directories recursive where
+    # files have been copied/moved to
+    for DATE in $DATES; do
+        chown -R $USER.$USER "$TARGET/$DATE"
+    done
 
-umount $DEVNAME
+    # delete all empty directories on SD card
+    # find "$MOUNT" -type d -empty -delete
 
-# Fix the permissions for all directories recursive where
-# files have been copied/moved to
-for DATE in $DATES; do
-    chown -R $USER.$USER "$TARGET/$DATE"
-done
-
-# delete all empty directories on SD card
-find "$MOUNT" -type d -empty -delete
-
-logger -t sd-autocopy "Finished job. Moved $NUM images."
-
-
-# play finish melody ;-)
-beep -f659  -l460 \
--n -f784  -l340 \
--n -f659  -l230 \
--n -f659  -l110 \
--n -f880  -l23  \
--n -f659  -l230 \
--n -f587  -l230 \
--n -f659  -l460 \
--n -f988  -l340 \
--n -f659  -l230 \
--n -f659  -l110 \
--n -f1047 -l230 \
--n -f988  -l230 \
--n -f784  -l230 \
--n -f659  -l230 \
--n -f988  -l230 \
--n -f1318 -l230 \
--n -f659  -l110 \
--n -f587  -l230 \
--n -f587  -l110 \
--n -f494  -l230 \
--n -f740  -l230 \
--n -f659  -l460
-
+    logger -t sd-autocopy "Finished job. Moved $NUM images."
 } &
 exit 0
