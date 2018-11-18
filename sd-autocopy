@@ -30,8 +30,8 @@ fi
 # Put this in curly braces and detach the whole block to background
 # for not blocking udev during copying.
 {
-    USER=andrew
-    TARGET=/home/$USER/Desktop/PhotoTest
+    USER=amcolash
+    TARGET=/volume1/homes/amcolash/data/Photos/TODO
     MOUNT=/mnt/sd-autocopy
     FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
     # TRANSFER="rsync -avh --progress"
