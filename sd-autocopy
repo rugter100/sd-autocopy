@@ -20,10 +20,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+LOGFILE=/var/log/sd-autocopy
+touch $LOGFILE
+
 # For testing, change it to: [ 1 == 1 ]
 if [ 0 == 1 ]; then
-   echo ======================== >> /tmp/test
-   env >> /tmp/test
+   echo ======================== >> $LOGFILE
+   env >> $LOGFILE
    exit 0
 fi
 
@@ -33,12 +36,14 @@ fi
     USER=amcolash
     TARGET=/volume1/homes/amcolash/data/Photos/TODO
     MOUNT=/mnt/sd-autocopy
-    FILE_MATCH=".*\.(jpg|cr2|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
-    # TRANSFER="rsync -avh --progress"
-    TRANSFER="rsync -avh --progress --remove-source-files"
+    FILE_MATCH=".*\.(jpg|cr2|dng|tiff|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
+
+    echo "Got Inside" >> $LOGFILE
 
     # Catch unset but needed vars - terminate script
-    if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
+    #if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
+    if [ -z "$DEVNAME" ]; then
+        echo "Missing stuff $DEVNAME" >> $LOGFILE
         exit 1
     fi
 
@@ -47,7 +52,7 @@ fi
     #    exit 1
     #fi
 
-    logger -t sd-autocopy "Got handled serial ($ID_SERIAL), moving images..."
+    echo "Got new device ($DEVNAME), moving images..." >> $LOGFILE
 
     if [ ! -d "$MOUNT" ]; then
         mkdir -p "$MOUNT"
@@ -69,8 +74,9 @@ fi
     for LINE in $LINES; do
         DATE=${LINE%%_*}
         FILE=${LINE#*_}
-        logger -t sd-autocopy "Moving $FILE to $TARGET/$DATE"
-        "$TRANFER" "$FILE" "$TARGET/$DATE"
+        echo "Moving $FILE to $TARGET/$DATE" >> $LOGFILE
+        rsync -avh --remove-source-files "$FILE" "$TARGET/$DATE"
+        #rsync -avh "$FILE" "$TARGET/$DATE"
         NUM=$(($NUM+1))
     done
 
@@ -85,6 +91,7 @@ fi
     # delete all empty directories on SD card
     # find "$MOUNT" -type d -empty -delete
 
-    logger -t sd-autocopy "Finished job. Moved $NUM images."
+    echo "Finished job. Moved $NUM images." >> $LOGFILE
 } &
+
 exit 0
