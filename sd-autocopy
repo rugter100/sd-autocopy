@@ -22,10 +22,10 @@
 
 LOGFILE=/var/log/sd-autocopy
 touch $LOGFILE
+echo ======================== >> $LOGFILE
 
 # For testing, change it to: [ 1 == 1 ]
 if [ 0 == 1 ]; then
-   echo ======================== >> $LOGFILE
    env >> $LOGFILE
    exit 0
 fi
@@ -38,19 +38,12 @@ fi
     MOUNT=/mnt/sd-autocopy
     FILE_MATCH=".*\.(jpg|cr2|dng|tiff|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
 
-    echo "Got Inside" >> $LOGFILE
-
     # Catch unset but needed vars - terminate script
     #if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
     if [ -z "$DEVNAME" ]; then
-        echo "Missing stuff $DEVNAME" >> $LOGFILE
+        echo "Missing env var DEVNAME" >> $LOGFILE
         exit 1
     fi
-
-    #if ! echo "$HANDLED_SERIALS" | grep $ID_SERIAL >/dev/null 2>&1; then
-    #    logger -t sd-autocopy "Got unhandled serial, skipping (Serial: $ID_SERIAL)"
-    #    exit 1
-    #fi
 
     echo "Got new device ($DEVNAME), moving images..." >> $LOGFILE
 
@@ -76,7 +69,6 @@ fi
         FILE=${LINE#*_}
         echo "Moving $FILE to $TARGET/$DATE" >> $LOGFILE
         rsync -avh --remove-source-files "$FILE" "$TARGET/$DATE"
-        #rsync -avh "$FILE" "$TARGET/$DATE"
         NUM=$(($NUM+1))
     done
 
@@ -91,7 +83,7 @@ fi
     # delete all empty directories on SD card
     # find "$MOUNT" -type d -empty -delete
 
-    echo "Finished job. Moved $NUM images." >> $LOGFILE
+    echo "Finished job. Moved $NUM files." >> $LOGFILE
 } &
 
 exit 0
