@@ -84,6 +84,9 @@ fi
     # find "$MOUNT" -type d -empty -delete
 
     echo "Finished job. Moved $NUM files." >> $LOGFILE
+
+    # Beep so we know we are all set
+    echo 2 >/dev/ttyS1
 } &
 
 exit 0
