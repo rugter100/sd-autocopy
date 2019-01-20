@@ -34,7 +34,7 @@ fi
 # for not blocking udev during copying.
 {
     USER=amcolash
-    TARGET=/volume1/homes/amcolash/data/Photos/TODO
+    TARGET=/volume1/homes/amcolash/data/TODO_MEDIA
     MOUNT=/mnt/sd-autocopy
     FILE_MATCH=".*\.(jpg|cr2|dng|tiff|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
 
@@ -45,7 +45,15 @@ fi
         exit 1
     fi
 
+    if [ "$DEVNAME" = "/dev/synoboot1" ] || [ "$DEVNAME" = "/dev/sda1" ] || [ "$DEVNAME" = "/dev/sdb1" ]; then
+        echo "Got a blacklisted drive ($DEVNAME), skipping" >> $LOGFILE
+        exit 1
+    fi
+
     echo "Got new device ($DEVNAME), moving images..." >> $LOGFILE
+
+    # Beep to know device detected
+    echo 2 >/dev/ttyS1
 
     if [ ! -d "$MOUNT" ]; then
         mkdir -p "$MOUNT"
@@ -68,7 +76,22 @@ fi
         DATE=${LINE%%_*}
         FILE=${LINE#*_}
         echo "Moving $FILE to $TARGET/$DATE" >> $LOGFILE
-        rsync -avh --remove-source-files "$FILE" "$TARGET/$DATE"
+
+        # Try 5 times to copy each file (rsync seems flaky at best)
+        for i in {0..4}; do
+            rsync -avh --progress --remove-source-files "$FILE" "$TARGET/$DATE"
+
+            # If the orignal is gone, things succeeded and break out of loop
+            if [ ! -f "$FILE" ]; then
+                echo "Sucessfully copied $FILE to $TARGET/$DATE"
+                break
+            fi
+        done
+
+        if [ -f "$FILE" ]; then
+            echo "$FILE was not copied, something went wrong"
+        fi
+
         NUM=$(($NUM+1))
     done
 
@@ -85,7 +108,12 @@ fi
 
     echo "Finished job. Moved $NUM files." >> $LOGFILE
 
+    # Wait a moment so if nothing copied we know what is going on with the beeps
+    sleep 1
+
     # Beep so we know we are all set
+    echo 2 >/dev/ttyS1
+    sleep 0.1
     echo 2 >/dev/ttyS1
 } &
 
