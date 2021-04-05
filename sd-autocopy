@@ -33,7 +33,7 @@ fi
 # Put this in curly braces and detach the whole block to background
 # for not blocking udev during copying.
 {
-    USER=amcolash
+    USER=root
     TARGET=/volume1/homes/amcolash/data/TODO_MEDIA
     MOUNT=/mnt/sd-autocopy
     FILE_MATCH=".*\.(3gp|ari|avi|braw|cine|cr2|cr3|dng|jpg|jpeg|mkv|mov|mp3|mp4|mpeg|mpg|mts|mxf|ogg|pdf|r3d|tiff|vob|wav|wma|wmv)$"
@@ -117,7 +117,7 @@ fi
         
         if [ $DOCKER_ENABLED == true ]; then
             echo "Docker enabled. Executing docker version Nextcloud filesync." >> $LOGFILE
-            docker exec -it -u 33 $DOCKER_CONTAINER_NAME php occ files:scan $NEXTCLOUD_USER
+            docker exec -t -u 33 $DOCKER_CONTAINER_NAME php occ files:scan $NEXTCLOUD_USER
         fi    
 
         if [ $DOCKER_ENABLED == false ]; then
