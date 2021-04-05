@@ -36,7 +36,7 @@ fi
     USER=amcolash
     TARGET=/volume1/homes/amcolash/data/TODO_MEDIA
     MOUNT=/mnt/sd-autocopy
-    FILE_MATCH=".*\.(3gp|ari|avi|braw|cine|cr2|cr3|dng|jpg|jpeg|mkv|mov|mp3|mp4|mpeg|mpg|mts|mxf|ogg|pdf|r3d|tiff|vob|wma|wmv)$"
+    FILE_MATCH=".*\.(3gp|ari|avi|braw|cine|cr2|cr3|dng|jpg|jpeg|mkv|mov|mp3|mp4|mpeg|mpg|mts|mxf|ogg|pdf|r3d|tiff|vob|wav|wma|wmv)$"
 
     # Catch unset but needed vars - terminate script
     #if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
