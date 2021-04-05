@@ -33,13 +33,16 @@ fi
 # Put this in curly braces and detach the whole block to background
 # for not blocking udev during copying.
 {
-    USER=amcolash
-    TARGET=/volume1/homes/amcolash/data/TODO_MEDIA
+    USER=root
+    TARGET=/file/location/here
     MOUNT=/mnt/sd-autocopy
-    FILE_MATCH=".*\.(3gp|ari|avi|braw|cine|cr2|cr3|dng|jpg|jpeg|mkv|mov|mp3|mp4|mpeg|mpg|mts|mxf|ogg|pdf|r3d|tiff|vob|wav|wma|wmv)$"
+    FILE_MATCH=".*\.(jpg|cr2|dng|tiff|jpeg|pdf|mkv|avi|mp4|3gp|mpg|mov|mpeg|wma|wmv|vob|mts)$"
+    NEXTCLOUD_ENABLED=true
+    DOCKER_ENABLED=true
+    DOCKER_CONTAINER_NAME=nextcloud
+    NEXTCLOUD_FILE_LOCATION=/var/www/html/data/user/files/directory/here
 
     # Catch unset but needed vars - terminate script
-    #if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
     if [ -z "$DEVNAME" ]; then
         echo "Missing env var DEVNAME" >> $LOGFILE
         exit 1
@@ -53,19 +56,21 @@ fi
     echo "Got new device ($DEVNAME), moving images..." >> $LOGFILE
 
     # Beep to know device detected
-    echo 2 >/dev/ttyS1
+#    echo 2 >/dev/ttyS1
 
     if [ ! -d "$MOUNT" ]; then
+        echo "Making Mount point..." >> $LOGFILE
         mkdir -p "$MOUNT"
     fi
-
-    mount $DEVNAME "$MOUNT"
+    echo "Mounting Storage..." >> $LOGFILE
+    mount $DEVNAME "$MOUNT" >> $LOGFILE
 
     LINES=$(find "$MOUNT" -regextype posix-egrep -iregex "$FILE_MATCH" -printf "%TY.%Tm.%Td_%p\n")
     DATES=$(echo "$LINES" | cut -d_ -f1 | uniq)
 
     # First create the directories when missing
     for DATE in $DATES; do
+        echo "Making date folder for $DATE" >> $LOGFILE
         echo $DATE
         mkdir -p "$TARGET/$DATE"
     done
@@ -105,6 +110,22 @@ fi
 
     # delete all empty directories on SD card
     # find "$MOUNT" -type d -empty -delete
+
+    # Nextcloud+(docker) sync
+    if [ $NEXTCLOUD_ENABLED == true ]; then
+        echo "Nextcloud enabled. Checking if docker support is enabled." >> $LOGFILE
+        
+        if [ $DOCKER_ENABLED == true ]; then
+            echo "Docker enabled. Executing docker version Nextcloud filesync." >> $LOGFILE
+            docker exec -t -u 33 $DOCKER_CONTAINER_NAME php occ files:scan --path="$NEXTCLOUD_FILE_LOCATION" >> $LOGFILE
+        fi    
+    
+        if [ $DOCKER_ENABLED == false ]; then
+            echo "Docker disabled. Executing Nextcloud filesync." >> $LOGFILE
+            php occ files:scan $NEXTCLOUD_USER >> $LOGFILE
+        fi
+        echo "Filescan complete!" >> $LOGIFLE 
+    fi
 
     echo "Finished job. Moved $NUM files." >> $LOGFILE
 
