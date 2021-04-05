@@ -41,7 +41,6 @@ fi
     DOCKER_ENABLED=true
     DOCKER_CONTAINER_NAME=nextcloud
     NEXTCLOUD_USER=marije
-    
 
     # Catch unset but needed vars - terminate script
     #if [ -z "$ID_SERIAL" ] || [ -z "$DEVNAME" ]; then
@@ -131,12 +130,12 @@ fi
     echo "Finished job. Moved $NUM files." >> $LOGFILE
 
     # Wait a moment so if nothing copied we know what is going on with the beeps
-#    sleep 1
+    sleep 1
 
     # Beep so we know we are all set
- #   echo 2 >/dev/ttyS1
- #   sleep 0.1
- #   echo 2 >/dev/ttyS1
+    echo 2 >/dev/ttyS1
+    sleep 0.1
+    echo 2 >/dev/ttyS1
 } &
 
 exit 0
